@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.env
+# Data is versioned by DVC, not git
+/data/raw/
+/data/interim/
+/data/processed/
+/models/
+# Local MLflow tracking store
+mlflow.db
+mlruns/
+mlartifacts/

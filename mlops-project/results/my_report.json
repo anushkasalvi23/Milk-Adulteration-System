@@ -1,0 +1,178 @@
+{
+  "rows": 3,
+  "scored": 3,
+  "rejected": 0,
+  "reject_reasons": {},
+  "flag_rate": 0.3333333333333333,
+  "bands": {
+    "accept": 2,
+    "reject": 1
+  },
+  "predicted_adulterants": {
+    "water": 1
+  },
+  "positives": 1,
+  "stage1": {
+    "all": {
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "pr_auc": 1.0,
+      "roc_auc": 1.0,
+      "flag_rate": 0.3333333333333333,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "tn": 2,
+      "ci95": {
+        "recall": [
+          1.0,
+          1.0
+        ],
+        "precision": [
+          1.0,
+          1.0
+        ],
+        "pr_auc": [
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "detectable": {
+      "recall": 1.0,
+      "precision": 1.0,
+      "f1": 1.0,
+      "pr_auc": 1.0,
+      "roc_auc": 1.0,
+      "flag_rate": 0.3333333333333333,
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "tn": 2,
+      "ci95": {
+        "recall": [
+          1.0,
+          1.0
+        ],
+        "precision": [
+          1.0,
+          1.0
+        ],
+        "pr_auc": [
+          1.0,
+          1.0
+        ]
+      }
+    }
+  },
+  "stage2": {
+    "macro_f1": 0.125,
+    "per_class_f1": {
+      "detergent": 0.0,
+      "glucose": 0.0,
+      "other": 0.0,
+      "skimmed_milk_powder": 0.0,
+      "sodium_bicarbonate": 0.0,
+      "starch": 0.0,
+      "urea": 0.0,
+      "water": 1.0
+    },
+    "confusion": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    ],
+    "labels": [
+      "detergent",
+      "glucose",
+      "other",
+      "skimmed_milk_powder",
+      "sodium_bicarbonate",
+      "starch",
+      "urea",
+      "water"
+    ],
+    "classes_present": [
+      "water"
+    ],
+    "macro_f1_present": 1.0
+  }
+}

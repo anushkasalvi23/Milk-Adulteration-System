@@ -1,0 +1,4 @@
+sample_id,collection_point,milk_type,fat_pct,snf_pct,density,ph,freezing_point,conductivity,is_adulterated,adulterant
+SYN-001,Test Center,cow,3.7,8.5,1.028,6.70,-0.525,4.5,0,
+SYN-002,Test Center,cow,2.8,7.0,1.022,6.75,-0.420,3.8,1,Water
+SYN-003,Test Center,buffalo,6.8,9.3,1.030,6.72,-0.540,4.3,0,
