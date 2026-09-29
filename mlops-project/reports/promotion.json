@@ -1,0 +1,13 @@
+{
+  "promoted": true,
+  "reason": "no production model yet",
+  "candidate": {
+    "recall": 1.0,
+    "precision": 1.0,
+    "pr_auc": 1.0,
+    "brier": 2.5670448167147697e-07,
+    "tp": 12,
+    "fp": 0,
+    "fn": 0
+  }
+}

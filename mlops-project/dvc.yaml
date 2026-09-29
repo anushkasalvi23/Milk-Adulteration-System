@@ -1,0 +1,145 @@
+stages:
+  ingest:
+    cmd: python -m milk_adulteration.data.ingest
+    deps:
+      - src/milk_adulteration/data/ingest.py
+    params:
+      - ingest
+    outs:
+      - data/raw/milk_combined_full_dataset.csv
+
+  validate:
+    cmd: python -m milk_adulteration.data.validate
+    deps:
+      - data/raw/milk_combined_full_dataset.csv
+      - src/milk_adulteration/config.py
+      - src/milk_adulteration/data/schema.py
+      - src/milk_adulteration/data/validate.py
+    params:
+      - validate
+    outs:
+      - data/interim/milk_clean.csv
+      - data/interim/milk_rejected.csv
+
+  eda:
+    cmd: python -m milk_adulteration.eda
+    deps:
+      - data/interim/milk_clean.csv
+      - src/milk_adulteration/eda.py
+    params:
+      - eda
+    outs:
+      - reports/eda.md:
+          cache: false
+    metrics:
+      - reports/eda_summary.json:
+          cache: false
+
+  split:
+    cmd: python -m milk_adulteration.data.split
+    deps:
+      - data/interim/milk_clean.csv
+      - src/milk_adulteration/data/split.py
+    params:
+      - split
+    outs:
+      - data/processed/train.csv
+      - data/processed/val.csv
+      - data/processed/test.csv
+
+  baselines:
+    cmd: python -m milk_adulteration.models.baselines
+    deps:
+      - data/processed/train.csv
+      - data/processed/val.csv
+      - data/processed/test.csv
+      - src/milk_adulteration/evaluation.py
+      - src/milk_adulteration/features.py
+      - src/milk_adulteration/models/baselines.py
+      - src/milk_adulteration/models/rules.py
+    params:
+      - baselines
+    outs:
+      - reports/baselines.md:
+          cache: false
+    metrics:
+      - reports/baselines.json:
+          cache: false
+
+  augment:
+    cmd: python -m milk_adulteration.data.augment
+    deps:
+      - data/processed/train.csv
+      - src/milk_adulteration/data/augment.py
+    params:
+      - augment
+    outs:
+      - data/processed/train_aug.csv
+
+  train:
+    cmd: python -m milk_adulteration.models.train
+    deps:
+      - data/processed/train.csv
+      - data/processed/train_aug.csv
+      - data/processed/val.csv
+      - src/milk_adulteration/data/augment.py
+      - src/milk_adulteration/evaluation.py
+      - src/milk_adulteration/features.py
+      - src/milk_adulteration/models/cascade.py
+      - src/milk_adulteration/models/train.py
+    params:
+      - augment
+      - train
+    outs:
+      - models/cascade.joblib
+    metrics:
+      - reports/train_cv.json:
+          cache: false
+
+  evaluate:
+    cmd: python -m milk_adulteration.models.evaluate
+    deps:
+      - data/processed/test.csv
+      - models/cascade.joblib
+      - reports/train_cv.json
+      - reports/baselines.json
+      - src/milk_adulteration/models/cascade.py
+      - src/milk_adulteration/models/evaluate.py
+    params:
+      - evaluate
+    outs:
+      - reports/model.md:
+          cache: false
+    metrics:
+      - reports/model_metrics.json:
+          cache: false
+
+  promote:
+    cmd: python -m milk_adulteration.models.promote
+    deps:
+      - models/cascade.joblib
+      - reports/model_metrics.json
+      - src/milk_adulteration/models/promote.py
+    params:
+      - promote
+    outs:
+      - models/model_info.json:
+          cache: false
+    metrics:
+      - reports/promotion.json:
+          cache: false
+
+  stress_test:
+    cmd: python -m milk_adulteration.models.stress_test
+    deps:
+      - data/processed/train.csv
+      - models/cascade.joblib
+      - src/milk_adulteration/models/stress_test.py
+    params:
+      - stress_test
+    outs:
+      - reports/stress_test.md:
+          cache: false
+    metrics:
+      - reports/stress_test.json:
+          cache: false

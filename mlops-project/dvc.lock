@@ -1,0 +1,483 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python -m milk_adulteration.data.ingest
+    deps:
+    - path: src/milk_adulteration/data/ingest.py
+      hash: md5
+      md5: 001d3aed4fe7b670317cee9b632ce235
+      size: 1866
+    params:
+      params.yaml:
+        ingest:
+          url: 
+            https://raw.githubusercontent.com/ommadav/Indian-Milk-Adulteration-Detection-Dataset/main/milk_combined_full_dataset.csv
+          sha256: 
+            7186d94e39e281863f3698f89610e7f3fd6ed4318f9fb9b85e06e24d724dfc18
+          output: data/raw/milk_combined_full_dataset.csv
+    outs:
+    - path: data/raw/milk_combined_full_dataset.csv
+      hash: md5
+      md5: 3ea13779ff22d83b7fc133af880e06e8
+      size: 16599475
+  validate:
+    cmd: python -m milk_adulteration.data.validate
+    deps:
+    - path: data/raw/milk_combined_full_dataset.csv
+      hash: md5
+      md5: 3ea13779ff22d83b7fc133af880e06e8
+      size: 16599475
+    - path: src/milk_adulteration/config.py
+      hash: md5
+      md5: 00edefe599ba5ba9a9422c9b382ecf29
+      size: 2275
+    - path: src/milk_adulteration/data/schema.py
+      hash: md5
+      md5: 75a974cf8e50e281aede4421ee0e37cd
+      size: 2168
+    - path: src/milk_adulteration/data/validate.py
+      hash: md5
+      md5: d2d48bcd7364664fd7cf1adab00f5451
+      size: 4340
+    params:
+      params.yaml:
+        validate:
+          input: data/raw/milk_combined_full_dataset.csv
+          output: data/interim/milk_clean.csv
+          rejected: data/interim/milk_rejected.csv
+    outs:
+    - path: data/interim/milk_clean.csv
+      hash: md5
+      md5: 87e5213f5e400685d1bffcd2860874fd
+      size: 267823
+    - path: data/interim/milk_rejected.csv
+      hash: md5
+      md5: 35c901be812e2407aee1841b79f78635
+      size: 155
+  eda:
+    cmd: python -m milk_adulteration.eda
+    deps:
+    - path: data/interim/milk_clean.csv
+      hash: md5
+      md5: 87e5213f5e400685d1bffcd2860874fd
+      size: 267823
+    - path: src/milk_adulteration/eda.py
+      hash: md5
+      md5: 06ab6aa49435b3979fb24b8e94dad4a7
+      size: 4039
+    params:
+      params.yaml:
+        eda:
+          input: data/interim/milk_clean.csv
+          report: reports/eda.md
+          metrics: reports/eda_summary.json
+    outs:
+    - path: reports/eda.md
+      hash: md5
+      md5: 372e75c7fb94961b9bc1410ccf04741a
+      size: 2578
+    - path: reports/eda_summary.json
+      hash: md5
+      md5: e76a742ed6615b0d53588b13d2c6a02c
+      size: 290
+  split:
+    cmd: python -m milk_adulteration.data.split
+    deps:
+    - path: data/interim/milk_clean.csv
+      hash: md5
+      md5: 87e5213f5e400685d1bffcd2860874fd
+      size: 267823
+    - path: src/milk_adulteration/data/split.py
+      hash: md5
+      md5: 9c837ace355da20a68dfbe541f210305
+      size: 1596
+    params:
+      params.yaml:
+        split:
+          input: data/interim/milk_clean.csv
+          output_dir: data/processed
+          seed: 42
+          val_size: 0.15
+          test_size: 0.15
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: a6944c2f530bf3199606ae7fe28c2a0d
+      size: 40381
+    - path: data/processed/train.csv
+      hash: md5
+      md5: e724c1f33a4a573d83f7b753bba1fc4f
+      size: 187449
+    - path: data/processed/val.csv
+      hash: md5
+      md5: 675e11fad86feb72eb986c2cd7a02ba1
+      size: 40275
+  baselines:
+    cmd: python -m milk_adulteration.models.baselines
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: a6944c2f530bf3199606ae7fe28c2a0d
+      size: 40381
+    - path: data/processed/train.csv
+      hash: md5
+      md5: e724c1f33a4a573d83f7b753bba1fc4f
+      size: 187449
+    - path: data/processed/val.csv
+      hash: md5
+      md5: 675e11fad86feb72eb986c2cd7a02ba1
+      size: 40275
+    - path: src/milk_adulteration/evaluation.py
+      hash: md5
+      md5: c54aa5b6f9be6f7074dd8330f71413f1
+      size: 3569
+    - path: src/milk_adulteration/features.py
+      hash: md5
+      md5: 898c58263808c19782502341e90ed3a8
+      size: 1234
+    - path: src/milk_adulteration/models/baselines.py
+      hash: md5
+      md5: 6a71231fbf3cb534ed1e2b3a1fab9655
+      size: 13646
+    - path: src/milk_adulteration/models/rules.py
+      hash: md5
+      md5: 85df539d27157c6b138170824b709c9f
+      size: 1765
+    params:
+      params.yaml:
+        baselines:
+          seed: 42
+          target_recall: 0.95
+          bootstrap_rounds: 1000
+          stage2_cv_folds: 5
+          stage2_cv_repeats: 5
+          report: reports/baselines.md
+          metrics: reports/baselines.json
+          mlflow:
+            tracking_uri: sqlite:///mlflow.db
+            experiment: baselines
+          logreg:
+            C: 1.0
+            max_iter: 2000
+          random_forest:
+            n_estimators: 500
+            min_samples_leaf: 1
+    outs:
+    - path: reports/baselines.json
+      hash: md5
+      md5: b95a59a8fb3d0504886f8601c0e38ae7
+      size: 13413
+    - path: reports/baselines.md
+      hash: md5
+      md5: c4dd405f858a7840d77450ec9229bb32
+      size: 2666
+  augment:
+    cmd: python -m milk_adulteration.data.augment
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: e724c1f33a4a573d83f7b753bba1fc4f
+      size: 187449
+    - path: src/milk_adulteration/data/augment.py
+      hash: md5
+      md5: 55bd8b686606b651988c78410c085523
+      size: 7595
+    params:
+      params.yaml:
+        augment:
+          input: data/processed/train.csv
+          output: data/processed/train_aug.csv
+          seed: 42
+          target_per_class: 300
+          dose_range:
+          - 0.5
+          - 1.5
+          combos:
+          - - water
+            - starch
+          - - water
+            - urea
+          rows_per_combo: 150
+          widen_pure:
+            rows: 2000
+            ranges:
+              fat_pct:
+              - 0.1
+              - 8.0
+              snf_pct:
+              - 8.3
+              - 10.0
+              density:
+              - 1.027
+              - 1.034
+              ph:
+              - 6.55
+              - 6.8
+              freezing_point:
+              - -0.56
+              - -0.52
+              conductivity:
+              - 3.5
+              - 5.5
+    outs:
+    - path: data/processed/train_aug.csv
+      hash: md5
+      md5: fae25051698d8148c09aa3484315ea61
+      size: 1112767
+  train:
+    cmd: python -m milk_adulteration.models.train
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: e724c1f33a4a573d83f7b753bba1fc4f
+      size: 187449
+    - path: data/processed/train_aug.csv
+      hash: md5
+      md5: fae25051698d8148c09aa3484315ea61
+      size: 1112767
+    - path: data/processed/val.csv
+      hash: md5
+      md5: 675e11fad86feb72eb986c2cd7a02ba1
+      size: 40275
+    - path: src/milk_adulteration/data/augment.py
+      hash: md5
+      md5: 55bd8b686606b651988c78410c085523
+      size: 7595
+    - path: src/milk_adulteration/evaluation.py
+      hash: md5
+      md5: c54aa5b6f9be6f7074dd8330f71413f1
+      size: 3569
+    - path: src/milk_adulteration/features.py
+      hash: md5
+      md5: 898c58263808c19782502341e90ed3a8
+      size: 1234
+    - path: src/milk_adulteration/models/cascade.py
+      hash: md5
+      md5: b0d18916a4880e884712f37127f8ff20
+      size: 4931
+    - path: src/milk_adulteration/models/train.py
+      hash: md5
+      md5: 3fa2021ad4bded4da270235a03092c5c
+      size: 13341
+    params:
+      params.yaml:
+        augment:
+          input: data/processed/train.csv
+          output: data/processed/train_aug.csv
+          seed: 42
+          target_per_class: 300
+          dose_range:
+          - 0.5
+          - 1.5
+          combos:
+          - - water
+            - starch
+          - - water
+            - urea
+          rows_per_combo: 150
+          widen_pure:
+            rows: 2000
+            ranges:
+              fat_pct:
+              - 0.1
+              - 8.0
+              snf_pct:
+              - 8.3
+              - 10.0
+              density:
+              - 1.027
+              - 1.034
+              ph:
+              - 6.55
+              - 6.8
+              freezing_point:
+              - -0.56
+              - -0.52
+              conductivity:
+              - 3.5
+              - 5.5
+        train:
+          seed: 42
+          device: cpu
+          n_jobs: 4
+          cv_folds: 5
+          n_trials_stage1: 30
+          n_trials_stage2: 30
+          stage1_exclude_other: true
+          target_recall: 0.95
+          reject_risk: 0.5
+          model: models/cascade.joblib
+          cv_report: reports/train_cv.json
+          mlflow:
+            tracking_uri: sqlite:///mlflow.db
+            experiment: cascade
+    outs:
+    - path: models/cascade.joblib
+      hash: md5
+      md5: 4839f26f38c2e431202f4daff42be70c
+      size: 1584115
+    - path: reports/train_cv.json
+      hash: md5
+      md5: fb6fb5396fc015c302dae6875c50bd2b
+      size: 896
+  evaluate:
+    cmd: python -m milk_adulteration.models.evaluate
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: a6944c2f530bf3199606ae7fe28c2a0d
+      size: 40381
+    - path: models/cascade.joblib
+      hash: md5
+      md5: 4839f26f38c2e431202f4daff42be70c
+      size: 1584115
+    - path: reports/baselines.json
+      hash: md5
+      md5: b95a59a8fb3d0504886f8601c0e38ae7
+      size: 13413
+    - path: reports/train_cv.json
+      hash: md5
+      md5: fb6fb5396fc015c302dae6875c50bd2b
+      size: 896
+    - path: src/milk_adulteration/models/cascade.py
+      hash: md5
+      md5: b0d18916a4880e884712f37127f8ff20
+      size: 4931
+    - path: src/milk_adulteration/models/evaluate.py
+      hash: md5
+      md5: 6f5cd86b8d13331626584f5f09c03fa3
+      size: 12076
+    params:
+      params.yaml:
+        evaluate:
+          bootstrap_rounds: 1000
+          report: reports/model.md
+          metrics: reports/model_metrics.json
+    outs:
+    - path: reports/model.md
+      hash: md5
+      md5: 32b48c155d440a757677be863a049641
+      size: 4325
+    - path: reports/model_metrics.json
+      hash: md5
+      md5: fac4873fc042ff34bfea1f39f7c37169
+      size: 1330
+  promote:
+    cmd: python -m milk_adulteration.models.promote
+    deps:
+    - path: models/cascade.joblib
+      hash: md5
+      md5: 4839f26f38c2e431202f4daff42be70c
+      size: 1584115
+    - path: reports/model_metrics.json
+      hash: md5
+      md5: fac4873fc042ff34bfea1f39f7c37169
+      size: 1330
+    - path: src/milk_adulteration/models/promote.py
+      hash: md5
+      md5: 9a0b4b074bb7d285b8bf0c18339a00aa
+      size: 5219
+    params:
+      params.yaml:
+        promote:
+          registered_model: milk-adulteration-cascade
+          alias: production
+          min_recall: 0.95
+          min_precision: 0.8
+          model_info: models/model_info.json
+          report: reports/promotion.json
+    outs:
+    - path: models/model_info.json
+      hash: md5
+      md5: c8e193dcd14a9c64bd788c8b38368c95
+      size: 940
+    - path: reports/promotion.json
+      hash: md5
+      md5: 58cee11596f23b083711ad17df6da060
+      size: 233
+  stress_test:
+    cmd: python -m milk_adulteration.models.stress_test
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: e724c1f33a4a573d83f7b753bba1fc4f
+      size: 187449
+    - path: models/cascade.joblib
+      hash: md5
+      md5: 4839f26f38c2e431202f4daff42be70c
+      size: 1584115
+    - path: src/milk_adulteration/models/stress_test.py
+      hash: md5
+      md5: f31272fad39894675e19cc2bde9f8738
+      size: 7218
+    params:
+      params.yaml:
+        stress_test:
+          seed: 0
+          samples: 2000
+          populations:
+            cow:
+              fat_pct:
+              - 3.0
+              - 5.0
+              snf_pct:
+              - 8.3
+              - 9.2
+              density:
+              - 1.027
+              - 1.033
+              ph:
+              - 6.6
+              - 6.8
+              freezing_point:
+              - -0.55
+              - -0.52
+              conductivity:
+              - 4.0
+              - 5.5
+            buffalo:
+              fat_pct:
+              - 5.0
+              - 8.0
+              snf_pct:
+              - 9.0
+              - 10.0
+              density:
+              - 1.03
+              - 1.034
+              ph:
+              - 6.6
+              - 6.8
+              freezing_point:
+              - -0.56
+              - -0.53
+              conductivity:
+              - 3.5
+              - 5.0
+          sweep_population: cow
+          water:
+            fat_pct: 0.0
+            snf_pct: 0.0
+            density: 0.998
+            ph: 7.0
+            freezing_point: 0.0
+            conductivity: 0.5
+          water_fractions:
+          - 0.03
+          - 0.05
+          - 0.1
+          - 0.15
+          - 0.2
+          - 0.3
+          sweep_points: 9
+          report: reports/stress_test.md
+          metrics: reports/stress_test.json
+    outs:
+    - path: reports/stress_test.json
+      hash: md5
+      md5: 3ae943f63cb35f3e8ec256caa8ae5135
+      size: 243
+    - path: reports/stress_test.md
+      hash: md5
+      md5: afaa1e63d00ca151a871f7a4680d3fd6
+      size: 2847

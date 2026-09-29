@@ -1,0 +1,55 @@
+{
+  "threshold": 0.48489032685756683,
+  "stage1": {
+    "all": {
+      "recall": 0.8421052631578947,
+      "precision": 1.0,
+      "pr_auc": 0.9349097381133993,
+      "brier": 0.008000251837074757,
+      "tp": 16,
+      "fp": 0,
+      "fn": 3
+    },
+    "detectable": {
+      "recall": 1.0,
+      "precision": 1.0,
+      "pr_auc": 1.0,
+      "brier": 2.5670448167147697e-07,
+      "tp": 12,
+      "fp": 0,
+      "fn": 0
+    }
+  },
+  "stage2_macro_f1": 0.6456709956709956,
+  "stage2_per_class_f1": {
+    "detergent": 0.0,
+    "glucose": 1.0,
+    "other": 0.7272727272727273,
+    "skimmed_milk_powder": 0.5714285714285714,
+    "sodium_bicarbonate": 0.8,
+    "starch": 0.4,
+    "urea": 0.6666666666666666,
+    "water": 1.0
+  },
+  "end_to_end": {
+    "all": {
+      "positives": 19,
+      "caught": 16,
+      "caught_and_named": 10,
+      "caught_and_named_rate": 0.5263157894736842
+    },
+    "detectable": {
+      "positives": 12,
+      "caught": 12,
+      "caught_and_named": 9,
+      "caught_and_named_rate": 0.75
+    }
+  },
+  "exit_criteria": {
+    "Stage 1 recall, detectable (test)": true,
+    "Stage 1 precision, detectable (test)": true,
+    "Stage 1 PR-AUC, detectable (test)": true,
+    "Stage 2 macro-F1 (test)": false,
+    "Stage 2 macro-F1 (train CV)": false
+  }
+}
