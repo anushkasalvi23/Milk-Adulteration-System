@@ -35,26 +35,10 @@ export default function Analysis() {
       const response = await axios.post(`/predict`, formData);
       setResult(response.data);
     } catch (err) {
-      console.warn("Backend API not reachable. Using fallback mock data for demonstration.");
-      // Fallback mock data so it doesn't just error out when the backend is offline
-      setTimeout(() => {
-        // Simple mock logic based on density and snf
-        const isSuspicious = formData.density < 1.026 || formData.snf_pct < 8.2;
-        setResult({
-          is_adulterated: isSuspicious,
-          risk_score: isSuspicious ? 0.88 : 0.05,
-          band: isSuspicious ? 'High Risk' : 'Safe',
-          adulterant: isSuspicious ? 'water' : 'none',
-          confidence: isSuspicious ? 0.92 : 0.99,
-          unusual_readings: isSuspicious ? ['Density is below normal threshold'] : [],
-          model_version: 'Mock-Fallback-v1'
-        });
-        setLoading(false);
-      }, 1000);
-      return;
+      setError(err.response?.data?.detail || err.message || 'An error occurred during prediction');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (

@@ -26,8 +26,8 @@ export default function DataExplorer() {
     <div className="space-y-6 font-sans">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Historical Data Log</h1>
-          <p className="text-slate-500 text-sm mt-1">Review centralized records and past evaluations.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Historical Data Log (Demo Data)</h1>
+          <p className="text-slate-500 text-sm mt-1">Review centralized records and past evaluations. (Currently using static sample data)</p>
         </div>
         <div className="flex gap-3">
           <button onClick={handleFilter} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium shadow-sm">
