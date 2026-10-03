@@ -21,7 +21,7 @@ COPY src ./src
 RUN pip install --no-deps . && rm -rf src
 # xgboost-cpu bundles its own OpenMP, so no system packages are needed.
 
-COPY models/cascade.joblib models/model_info.json models/
+COPY models/cascade.joblib models/
 
 RUN useradd --system --uid 10001 app
 USER app
