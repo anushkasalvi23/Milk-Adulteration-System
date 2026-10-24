@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🥛 MilkGuard
+# 🥛 PureMilk
 
 ### An MLOps-driven Milk Supply Chain Adulteration Detection System
 
@@ -52,7 +52,7 @@ Flag adulterated milk from six routine field readings, identify the likely adult
 
 Milk adulteration, such as adding water, starch, urea or detergent, is a serious food-safety and economic problem across dairy supply chains. Laboratory tests are accurate but slow and expensive, so they cannot screen every sample at a collection center.
 
-**MilkGuard** is an end-to-end system that screens samples using only the readings a collection center can measure on the spot:
+**PureMilk** is an end-to-end system that screens samples using only the readings a collection center can measure on the spot:
 
 | Reading | Unit |
 | --- | --- |
@@ -383,7 +383,7 @@ The workflow in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs:
 - **Undetectable adulterants.** Formalin, hydrogen peroxide, vegetable oil and melamine (`other`) look like pure milk in the six readings and need a confirmatory lab test.
 - **Stage 2 accuracy.** Adulterant identification is below target on the held-out test set (macro-F1 0.62 on 19 samples, 0.80 in train CV). Starch and skimmed milk powder are easily confused.
 - **Small test set.** Test-set metrics rest on very few adulterated samples (12 detectable, 19 total), so confidence intervals are wide.
-- **Not a regulatory tool.** MilkGuard is a screening aid, not a replacement for certified laboratory testing.
+- **Not a regulatory tool.** PureMilk is a screening aid, not a replacement for certified laboratory testing.
 
 To score real samples on your own computer, follow [`docs/RUN_LOCALLY.md`](docs/RUN_LOCALLY.md). [`docs/GUIDE.md`](docs/GUIDE.md) covers retraining, GPU training (faster, not more accurate) and further limitations.
 
