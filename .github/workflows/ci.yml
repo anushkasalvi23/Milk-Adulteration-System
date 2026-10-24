@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    working-directory: Model
+
 jobs:
   test:
     # Lint, unit tests, Pandera schema tests and API tests (on a small model).
@@ -17,6 +21,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: Model/pyproject.toml
       - run: pip install -e ".[dev]"
       - run: ruff check .
       - run: ruff format --check .
@@ -34,6 +39,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: Model/pyproject.toml
       - run: pip install -e ".[dev]"
       - run: dvc repro --force
       - name: Show promotion decision
@@ -42,9 +48,9 @@ jobs:
         with:
           name: model
           path: |
-            models/cascade.joblib
-            models/model_info.json
-            reports/
+            Model/models/cascade.joblib
+            Model/models/model_info.json
+            Model/reports/
           retention-days: 14
 
   docker:
@@ -60,6 +66,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: model
+          path: Model
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

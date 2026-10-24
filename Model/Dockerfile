@@ -16,7 +16,7 @@ RUN --mount=type=secret,id=pip_ca,required=false \
     pip install -r requirements/serve.txt
 
 # --no-deps: runtime deps come from the pins above (xgboost-cpu, not xgboost).
-COPY pyproject.toml README.md ./
+COPY pyproject.toml ./
 COPY src ./src
 RUN pip install --no-deps . && rm -rf src
 # xgboost-cpu bundles its own OpenMP, so no system packages are needed.

@@ -26,8 +26,8 @@ laptop (Windows, macOS or Linux) is enough.
 **macOS / Linux** (Terminal):
 
 ```bash
-git clone https://github.com/akkki007/mlops-project.git
-cd mlops-project
+git clone https://github.com/anushkasalvi23/Milk-Adulteration-System.git
+cd Milk-Adulteration-System/Model
 git checkout claude/work-prioritization-5tfpx6    # or main, once merged
 python3.11 -m venv .venv
 source .venv/bin/activate
@@ -39,8 +39,8 @@ On macOS, XGBoost also needs OpenMP: `brew install libomp`.
 **Windows** (PowerShell):
 
 ```powershell
-git clone https://github.com/akkki007/mlops-project.git
-cd mlops-project
+git clone https://github.com/anushkasalvi23/Milk-Adulteration-System.git
+cd Milk-Adulteration-System/Model
 git checkout claude/work-prioritization-5tfpx6    # or main, once merged
 py -3.11 -m venv .venv
 .venv\Scripts\Activate.ps1
@@ -50,7 +50,7 @@ pip install -e ".[dev]"
 If PowerShell refuses to run the activate script, run
 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then try again.
 
-Every later session starts with `cd mlops-project` and the activate line
+Every later session starts with `cd Milk-Adulteration-System/Model` and the activate line
 (`source .venv/bin/activate`, or `.venv\Scripts\Activate.ps1` on Windows).
 
 ## 3. Get the trained model (once, about 6 minutes)
@@ -70,7 +70,7 @@ You only need to redo this after pulling a newer version of the project.
 
 ## 4. Put your readings in a CSV file
 
-Start from [`examples/real_samples_template.csv`](examples/real_samples_template.csv).
+Start from [`examples/real_samples_template.csv`](../Model/examples/real_samples_template.csv).
 You can open it in Excel or LibreOffice and save as CSV. Its three rows are
 made-up examples; replace them with your samples. One row per sample:
 
@@ -160,7 +160,7 @@ Open <http://127.0.0.1:8000/docs>, choose **POST /predict**, then **Try it out**
 Edit the example readings and press **Execute**. **POST /predict/batch** accepts
 the same CSV file as step 5. Stop the server with Ctrl+C.
 
-With Docker installed, `docker compose up --build` runs the same service in a
+With Docker installed, `docker compose up --build` (from the repository root) runs the same service in a
 container, after step 3.
 
 ## 7. How far to trust the results

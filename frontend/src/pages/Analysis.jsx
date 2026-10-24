@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import CsvUpload from './CsvUpload';
+import { predict, errorMessage, addHistory } from '../api';
 import { Shield, ShieldAlert, CheckCircle, Activity, Droplet, FlaskConical, AlertTriangle } from 'lucide-react';
 
-export default function Analysis() {
+function SingleSample() {
   const [formData, setFormData] = useState({
     sample_id: 'S-2051',
     collection_point: 'Zone A - Center 42',
@@ -22,7 +23,7 @@ export default function Analysis() {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? parseFloat(value) : value
+      [name]: type === 'number' ? (value === '' ? '' : parseFloat(value)) : value
     }));
   };
 
@@ -30,19 +31,36 @@ export default function Analysis() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setResult(null);
     
     try {
-      const response = await axios.post(`/predict`, formData);
-      setResult(response.data);
+      const payload = {
+        ...formData,
+        sample_id: formData.sample_id || null,
+        collection_point: formData.collection_point || null,
+      };
+      const data = await predict(payload);
+      setResult(data);
+      addHistory([{
+        id: data.sample_id || '-',
+        date: new Date().toLocaleString(),
+        point: payload.collection_point || '-',
+        is_adulterated: data.is_adulterated,
+        risk_score: data.risk_score,
+        band: data.band,
+        adulterant: data.adulterant,
+        details: `Fat: ${payload.fat_pct}%, SNF: ${payload.snf_pct}%, Density: ${payload.density}, pH: ${payload.ph}, Freezing: ${payload.freezing_point}, Conductivity: ${payload.conductivity}`,
+      }]);
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'An error occurred during prediction');
+      setResult(null);
+      setError(errorMessage(err));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 font-sans">
+    <div className="w-full space-y-6 font-sans">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Sample Analysis</h1>
         <p className="text-slate-500 text-sm mt-1">Run individual sensor readings through the testing system.</p>
@@ -150,7 +168,7 @@ export default function Analysis() {
                       </div>
                     )}
 
-                    {result.confidence && (
+                    {result.confidence != null && (
                        <div className="flex justify-between items-center pt-3 border-t border-slate-200">
                          <span className="text-sm font-medium text-slate-600">Confidence</span>
                          <span className="text-sm font-semibold text-slate-900">{(result.confidence * 100).toFixed(1)}%</span>
@@ -201,6 +219,21 @@ function InputGroup({ label, name, value, onChange, type, step, suffix }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+export default function Analysis() {
+  const [tab, setTab] = useState('single');
+  const tabs = [['single', 'Single sample'], ['csv', 'Upload CSV']];
+  return (
+    <div className="w-full space-y-6">
+      <div className="inline-flex bg-slate-100 rounded-xl p-1">
+        {tabs.map(([k, l]) => (
+          <button key={k} onClick={() => setTab(k)} className={`px-5 py-2 text-sm rounded-lg transition-colors ${tab === k ? 'bg-white shadow-sm font-medium text-slate-900' : 'text-slate-500 hover:text-slate-800'}`}>{l}</button>
+        ))}
+      </div>
+      {tab === 'single' ? <SingleSample /> : <CsvUpload />}
     </div>
   );
 }
