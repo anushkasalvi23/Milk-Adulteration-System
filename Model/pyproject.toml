@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "milk-adulteration"
 version = "0.1.0"
 description = "Two-stage milk adulteration detection service (MLOps project)"
-readme = "README.md"
 requires-python = ">=3.11"
 # Core: what loading and running the model needs.
 dependencies = [

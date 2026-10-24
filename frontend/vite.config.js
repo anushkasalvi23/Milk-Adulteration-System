@@ -9,19 +9,11 @@ export default defineConfig({
     react()
   ],
   server: {
-    proxy: {
-      '/predict': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true
-      },
-      '/model': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true
-      },
-      '/metrics': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true
-      }
-    }
-  }
+    proxy: Object.fromEntries(
+      ['/predict', '/model', '/metrics', '/health', '/docs', '/openapi.json'].map((path) => [
+        path,
+        { target: process.env.API_URL || 'http://127.0.0.1:8000', changeOrigin: true },
+      ])
+    ),
+  },
 })

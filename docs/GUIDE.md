@@ -6,7 +6,7 @@ without an NVIDIA GPU. Read the first section before spending GPU time.
 ## 1. Where the model stands today
 
 **The model has not been tested on real milk samples.** Every number in
-[`reports/model.md`](reports/model.md) comes from the *synthetic* ommadav dataset:
+[`reports/model.md`](../Model/reports/model.md) comes from the *synthetic* ommadav dataset:
 2,500 rows simulated from FSSAI/BIS standards, with only 124 adulterated rows.
 
 | What we measured (synthetic test set) | Result |
@@ -28,7 +28,7 @@ Treat these as "the pipeline works", not "the model works on milk":
 
 No real labelled samples with all six readings were reachable: the Kaggle
 Lactoscanner data needs a login, the MADS repo doesn't ship its CSV, and the other
-public set is synthetic. So [`reports/stress_test.md`](reports/stress_test.md)
+public set is synthetic. So [`reports/stress_test.md`](../Model/reports/stress_test.md)
 (`dvc repro stress_test`) probes the model with *generated* samples based on dairy
 physics instead.
 
@@ -106,8 +106,8 @@ Requirements: an NVIDIA GPU with a recent driver, Linux or WSL2, Python 3.11, gi
 ```bash
 nvidia-smi                      # must list your GPU and a driver version
 
-git clone https://github.com/akkki007/mlops-project.git
-cd mlops-project
+git clone https://github.com/anushkasalvi23/Milk-Adulteration-System.git
+cd Milk-Adulteration-System/Model
 git checkout claude/work-prioritization-5tfpx6   # or main, once merged
 
 python3.11 -m venv .venv && . .venv/bin/activate
@@ -133,7 +133,7 @@ If it raises "found no usable GPU", fix the driver first (`nvidia-smi` must work
 
 ## 4. Train on the GPU
 
-The device is a pipeline parameter, `train.device` in [`params.yaml`](params.yaml).
+The device is a pipeline parameter, `train.device` in [`params.yaml`](../Model/params.yaml).
 Training refuses to start if you ask for `cuda` and no GPU is usable. XGBoost itself
 would otherwise fall back to CPU silently.
 
@@ -182,9 +182,9 @@ Docker image (which have no GPU) load it normally. Two things must match between
 the training machine and the serving image, because the model file is a pickle:
 
 - `numpy`, `scikit-learn` and `xgboost` versions must equal the pins in
-  [`requirements/serve.txt`](requirements/serve.txt). Check with
+  [`requirements/serve.txt`](../Model/requirements/serve.txt). Check with
   `pip list | grep -Ei "numpy|scikit-learn|xgboost"`.
-- Build the image on the machine that trained the model (`docker compose up --build`),
+- Build the image on the machine that trained the model (`docker compose up --build` (from the repository root)),
   or copy `models/cascade.joblib` and `models/model_info.json` to where you build it.
 
 `models/` is not in git. To share trained models between machines, configure a DVC

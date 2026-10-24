@@ -21,7 +21,7 @@ The `docker-compose.yml` configures the following stack:
    - Runs `grafana/grafana`.
    - Configured with `grafana_data` volume to persist dashboards.
    - Automatically provisions Prometheus as its data source.
-   - Pre-loaded with the **Milk Adulteration Monitoring** dashboard (provisioned from `grafana/dashboards/milk_adulteration.json`).
+   - Pre-loaded with the **Milk Adulteration Monitoring** dashboard (provisioned from `../Monitoring/dashboards/milk_adulteration.json`).
 
 4. **`mlflow` (Experiment Tracking & Model Registry - Port 5000)**
    - Runs the `mlflow server`.
@@ -41,7 +41,7 @@ docker compose up -d --build
 - **FastAPI Application**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - **MLflow UI**: [http://localhost:5000](http://localhost:5000)
 - **Prometheus**: [http://localhost:9090](http://localhost:9090)
-- **Grafana Dashboard**: [http://localhost:3000](http://localhost:3000)
+- **Grafana Dashboard**: [http://localhost:3001](http://localhost:3001)
   - Default credentials are **Username**: `admin`, **Password**: `admin`.
   - Navigate to Dashboards -> General -> Milk Adulteration Monitoring to view the pre-configured charts.
 

@@ -1,15 +1,69 @@
-# Milk Adulteration Detection
+# Milk Adulteration Detection System
+
+An end-to-end milk adulteration detection project with a React dashboard, a FastAPI model service, and Prometheus/Grafana monitoring.
+
+## Repository layout
+
+```text
+.
+├── frontend/                 # React + Vite dashboard
+├── Monitoring/               # Provisioned Grafana dashboards and data source
+├── Model/                    # Python model, API, training pipeline, and tests
+├── docker-compose.yml        # Runs the full local stack
+├── prometheus.yml            # Prometheus scrape configuration
+├── docs/                     # GUIDE, RUN_LOCALLY and MONITORING guides
+└── .github/workflows/        # CI
+```
+
+This project uses **one Git repository**, rooted at this directory. Do not initialize or commit a separate Git repository inside `Model/`; keeping the model as a normal subdirectory lets the root Compose file and CI track the whole application together.
+
+## Run the full application
+
+From the repository root, start Docker Desktop and run:
+
+```bash
+docker compose up --build
+```
+
+The services are available at:
+
+| Service | URL |
+| --- | --- |
+| Dashboard | http://localhost:80 |
+| FastAPI docs | http://localhost:8000/docs |
+| MLflow | http://localhost:5000 |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3001 |
+
+Grafana's local default login is `admin` / `admin`. Change the default password before exposing this stack beyond your computer.
+
+## Run services separately
+
+Start the API from `Model/` (see [Model quick start](#quick-start-model-and-api) and [`docs/RUN_LOCALLY.md`](docs/RUN_LOCALLY.md)). Start the dashboard from `frontend/` with:
+
+```bash
+npm install
+npm run dev
+```
+
+Sign-in uses [Clerk](https://clerk.com): copy `frontend/.env.example` to `frontend/.env.local` and set `VITE_CLERK_PUBLISHABLE_KEY` (for Docker, also put it in a root `.env`).
+
+More detail: [`docs/MONITORING.md`](docs/MONITORING.md) (monitoring stack), [`docs/RUN_LOCALLY.md`](docs/RUN_LOCALLY.md) (scoring real samples), [`docs/GUIDE.md`](docs/GUIDE.md) (retraining, GPU, limitations).
+
+---
+
+# Model, data pipeline and API
 
 An MLOps service that flags adulterated milk from six routine readings (fat %, SNF %,
 density, pH, freezing point, conductivity) using a two-stage XGBoost cascade.
 Stage 1 scores whether a sample is adulterated; Stage 2 names the likely adulterant.
 
 > **Not yet tested on real milk.** All results are on a synthetic dataset. A
-> physics stress test ([`reports/stress_test.md`](reports/stress_test.md)) found the
+> physics stress test ([`reports/stress_test.md`](Model/reports/stress_test.md)) found the
 > first model flagged 39% of pure cow milk across published normal ranges; training
 > now widens pure milk to those ranges, which brings that to 0.6% (buffalo milk: 25%).
-> To score real samples on your own computer, follow [RUN_LOCALLY.md](RUN_LOCALLY.md).
-> [GUIDE.md](GUIDE.md) has the details and how to train on a GPU (faster, not more
+> To score real samples on your own computer, follow [RUN_LOCALLY.md](docs/RUN_LOCALLY.md).
+> [docs/GUIDE.md](docs/GUIDE.md) has the details and how to train on a GPU (faster, not more
 > accurate).
 
 ## Status
@@ -23,9 +77,10 @@ Stage 1 scores whether a sample is adulterated; Stage 2 names the likely adulter
 | 5 | React dashboard, PostgreSQL, Prometheus + Grafana | Next |
 | 6 | Validation on real data, SHAP report, write-up | |
 
-## Quick start
+## Quick start (model and API)
 
 ```bash
+cd Model
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[dev]"
 dvc repro          # ingest -> validate -> eda -> split -> baselines -> augment -> train -> evaluate -> promote
@@ -43,13 +98,13 @@ Install only what you need: `pip install -e .` (load and run the model),
 | --- | --- | --- |
 | `ingest` | `milk_adulteration.data.ingest` | `data/raw/milk_combined_full_dataset.csv`, checked against the SHA-256 in `params.yaml` |
 | `validate` | `milk_adulteration.data.validate` | `data/interim/milk_clean.csv` (six features, IDs, labels) and `milk_rejected.csv` (failed rows with a reason) |
-| `eda` | `milk_adulteration.eda` | [`reports/eda.md`](reports/eda.md), `reports/eda_summary.json` (DVC metrics) |
+| `eda` | `milk_adulteration.eda` | [`reports/eda.md`](Model/reports/eda.md), `reports/eda_summary.json` (DVC metrics) |
 | `split` | `milk_adulteration.data.split` | `data/processed/{train,val,test}.csv`: 70/15/15, stratified on adulterant class, seed 42 |
-| `baselines` | `milk_adulteration.models.baselines` | [`reports/baselines.md`](reports/baselines.md), `reports/baselines.json`, one MLflow run per model |
+| `baselines` | `milk_adulteration.models.baselines` | [`reports/baselines.md`](Model/reports/baselines.md), `reports/baselines.json`, one MLflow run per model |
 | `augment` | `milk_adulteration.data.augment` | `data/processed/train_aug.csv`: every Stage 2 class grown to 300 rows, plus water+starch and water+urea rows |
 | `train` | `milk_adulteration.models.train` | `models/cascade.joblib`, `reports/train_cv.json`; Optuna trials as nested MLflow runs |
-| `evaluate` | `milk_adulteration.models.evaluate` | [`reports/model.md`](reports/model.md), `reports/model_metrics.json` |
-| `promote` | `milk_adulteration.models.promote` | Registers the model in MLflow; moves the `production` alias if it earns it. Writes `models/model_info.json` and [`reports/promotion.json`](reports/promotion.json) |
+| `evaluate` | `milk_adulteration.models.evaluate` | [`reports/model.md`](Model/reports/model.md), `reports/model_metrics.json` |
+| `promote` | `milk_adulteration.models.promote` | Registers the model in MLflow; moves the `production` alias if it earns it. Writes `models/model_info.json` and [`reports/promotion.json`](Model/reports/promotion.json) |
 
 The source is the CC0 [Indian Milk Adulteration Detection Dataset](https://github.com/ommadav/Indian-Milk-Adulteration-Detection-Dataset)
 (2,500 rows, **synthetic**). Only the six field-level readings are kept; the lab-only
@@ -70,7 +125,7 @@ No DVC remote is configured yet; add one with `dvc remote add -d storage <url>` 
 
 ## Baselines (Week 2)
 
-Full tables with 95% bootstrap CIs are in [`reports/baselines.md`](reports/baselines.md).
+Full tables with 95% bootstrap CIs are in [`reports/baselines.md`](Model/reports/baselines.md).
 Results are on synthetic data.
 
 - **FSSAI rules** (`models/rules.py`, fixed published thresholds): precision 1.00 but
@@ -92,7 +147,7 @@ Tracking is a local SQLite store (`mlflow.db`, not committed).
 
 ## Two-stage cascade (Week 3)
 
-Full results are in [`reports/model.md`](reports/model.md). Results are on synthetic data.
+Full results are in [`reports/model.md`](Model/reports/model.md). Results are on synthetic data.
 
 ```python
 from milk_adulteration.models.cascade import Cascade
@@ -121,7 +176,7 @@ model.predict(df)  # is_adulterated, risk_score, band, adulterant, confidence
   ≥ 0.5 are `reject`, the rest `retest`. Unflagged samples with readings outside
   the training ranges are also `retest`.
 - **Pure-milk widening.** 2,000 extra pure rows stretched onto typical published
-  cow and buffalo ranges (`augment.widen_pure`). See GUIDE.md for why and what it
+  cow and buffalo ranges (`augment.widen_pure`). See docs/GUIDE.md for why and what it
   costs.
 
 | Test metric (detectable adulterants) | Result | Target |
@@ -154,8 +209,9 @@ curl -s localhost:8000/predict/batch -F file=@samples.csv
 **Docker.** Build after `dvc repro`, because the image bundles `models/cascade.joblib`:
 
 ```bash
-docker compose up --build        # or: docker build -t milk-adulteration-api .
-python scripts/smoke_test.py     # checks every endpoint against a running API
+docker compose up --build        # full stack, from the repository root
+# or just the API image, from Model/: docker build -t milk-adulteration-api .
+python Model/scripts/smoke_test.py     # checks every endpoint against a running API
 ```
 
 The image runs as a non-root user with a health check. It uses `xgboost-cpu`
