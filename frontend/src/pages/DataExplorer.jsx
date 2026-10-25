@@ -1,17 +1,21 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Database, Upload, Download, ChevronRight, X, Trash2 } from 'lucide-react';
 import { predictBatchCsv, errorMessage, loadHistory, addHistory, clearHistory } from '../api';
 
 const PAGE_SIZE = 10;
 
 export default function DataExplorer() {
-  const [rows, setRows] = useState(loadHistory);
+  const [rows, setRows] = useState([]);
   const [selectedRow, setSelectedRow] = useState(null);
   const [page, setPage] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState(null);
   const [error, setError] = useState(null);
   const fileRef = useRef(null);
+
+  useEffect(() => {
+    loadHistory().then(setRows);
+  }, []);
 
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -34,7 +38,8 @@ export default function DataExplorer() {
         adulterant: r.adulterant,
         details: r.status === 'rejected' ? `Rejected: ${r.reject_reason}` : `Source: ${file.name}, row ${r.row + 1}`,
       }));
-      setRows(addHistory(entries));
+      addHistory(entries);
+      setRows(await loadHistory());
       setPage(0);
       const s = data.summary;
       setNotice(`${file.name}: ${s.scored} scored, ${s.rejected} rejected, ${s.flagged} flagged.`);
@@ -57,8 +62,8 @@ export default function DataExplorer() {
     URL.revokeObjectURL(a.href);
   };
 
-  const handleClear = () => {
-    clearHistory();
+  const handleClear = async () => {
+    await clearHistory();
     setRows([]);
     setSelectedRow(null);
     setPage(0);

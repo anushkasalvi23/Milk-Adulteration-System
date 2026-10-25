@@ -40,7 +40,7 @@ export default function Dashboard() {
   const [health, setHealth] = useState(null);
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
-  const [history] = useState(loadHistory);
+  const [history, setHistory] = useState([]);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState('All');
 
@@ -58,6 +58,7 @@ export default function Dashboard() {
         if (alive) setError(errorMessage(err));
       }
     };
+    loadHistory().then((h) => alive && setHistory(h));
     load();
     const t = setInterval(load, 10000);
     return () => {

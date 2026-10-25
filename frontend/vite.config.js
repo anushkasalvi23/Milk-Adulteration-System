@@ -10,7 +10,7 @@ export default defineConfig({
   ],
   server: {
     proxy: Object.fromEntries(
-      ['/predict', '/model', '/metrics', '/health', '/docs', '/openapi.json'].map((path) => [
+      ['/history', '/predict', '/model', '/metrics', '/health', '/docs', '/openapi.json'].map((path) => [
         path,
         { target: process.env.API_URL || 'http://127.0.0.1:8000', changeOrigin: true },
       ])
