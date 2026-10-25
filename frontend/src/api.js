@@ -57,17 +57,47 @@ export async function getMetrics() {
   return out;
 }
 
-// Prediction history kept in the browser (the API is stateless).
+// Prediction history. The API stores every result in MongoDB; the browser copy
+// is only a fallback for when the API has no database configured.
 const KEY = 'milk_history_v1';
-export function loadHistory() {
+
+function toRow(d) {
+  const inp = d.inputs;
+  return {
+    id: d.sample_id || (d.row != null ? `row ${d.row + 1}` : '-'),
+    date: new Date(d.created_at).toLocaleString(),
+    point: d.collection_point || '-',
+    status: d.status,
+    is_adulterated: d.is_adulterated,
+    risk_score: d.risk_score,
+    band: d.band,
+    adulterant: d.adulterant,
+    details:
+      d.status === 'rejected'
+        ? `Rejected: ${d.reject_reason}`
+        : inp
+          ? `Fat: ${inp.fat_pct}%, SNF: ${inp.snf_pct}%, Density: ${inp.density}, pH: ${inp.ph}, Freezing: ${inp.freezing_point}, Conductivity: ${inp.conductivity}`
+          : `Source: ${d.collection_point || '-'}, row ${(d.row ?? 0) + 1}`,
+  };
+}
+
+export function loadLocalHistory() {
   try {
     return JSON.parse(localStorage.getItem(KEY)) || [];
   } catch {
     return [];
   }
 }
+export async function loadHistory() {
+  try {
+    const docs = await client.get('/history/predictions', { params: { limit: 1000 } }).then((r) => r.data);
+    return docs.map(toRow);
+  } catch {
+    return loadLocalHistory();
+  }
+}
 export function addHistory(entries) {
-  const next = [...entries, ...loadHistory()].slice(0, 500);
+  const next = [...entries, ...loadLocalHistory()].slice(0, 500);
   try {
     localStorage.setItem(KEY, JSON.stringify(next));
   } catch {
@@ -75,10 +105,15 @@ export function addHistory(entries) {
   }
   return next;
 }
-export function clearHistory() {
+export async function clearHistory() {
   try {
     localStorage.removeItem(KEY);
   } catch {
     /* ignore */
+  }
+  try {
+    await client.delete('/history/predictions');
+  } catch {
+    /* no database configured */
   }
 }

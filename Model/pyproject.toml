@@ -22,6 +22,7 @@ dependencies = [
 serve = [
     "fastapi>=0.110",
     "prometheus-client>=0.20",
+    "pymongo>=4.6",
     "python-multipart>=0.0.9",
     "uvicorn[standard]>=0.29",
 ]

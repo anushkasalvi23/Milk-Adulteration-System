@@ -15,7 +15,7 @@ import os
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -29,6 +29,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from milk_adulteration import __version__
 from milk_adulteration.api.metrics import Metrics
 from milk_adulteration.api.schemas import BatchResponse, Health, Prediction, Sample
+from milk_adulteration.api.storage import ResultStore
 from milk_adulteration.config import FEATURES
 from milk_adulteration.data.validate import split_valid_readings
 from milk_adulteration.models.cascade import BANDS, Cascade
@@ -81,9 +82,16 @@ def model_version(model: Cascade, info: dict[str, Any]) -> str:
     return f"run-{run[:8]}" if run else "unversioned"
 
 
-def create_app(model: Cascade | None = None, model_info: dict[str, Any] | None = None) -> FastAPI:
-    """Build the app. Tests pass a model; production loads it from disk at startup."""
-    state: dict[str, Any] = {"model": model, "info": model_info or {}}
+def create_app(
+    model: Cascade | None = None,
+    model_info: dict[str, Any] | None = None,
+    store: ResultStore | None = None,
+) -> FastAPI:
+    """Build the app. Tests pass a model; production loads it from disk at startup.
+
+    Results are saved to MongoDB when `store` is given or `MONGODB_URI` is set.
+    """
+    state: dict[str, Any] = {"model": model, "info": model_info or {}, "store": store}
     metrics = Metrics()
 
     @asynccontextmanager
@@ -95,6 +103,10 @@ def create_app(model: Cascade | None = None, model_info: dict[str, Any] | None =
             if info_path.exists():
                 state["info"] = json.loads(info_path.read_text())
             log.info("Loaded %s from %s", model_version(state["model"], state["info"]), path)
+        if state["store"] is None:
+            state["store"] = ResultStore.from_env()
+        if state["store"] is not None:
+            log.info("Saving results to MongoDB")
         metrics.model_info.labels(version=model_version(state["model"], state["info"])).set(1)
         yield
 
@@ -160,7 +172,7 @@ def create_app(model: Cascade | None = None, model_info: dict[str, Any] | None =
     def predict(sample: Sample) -> Prediction:
         pred = get_model().predict(pd.DataFrame([sample.model_dump()])).iloc[0]
         metrics.observe_predictions(pred.to_frame().T, [sample.collection_point])
-        return Prediction(
+        result = Prediction(
             sample_id=sample.sample_id,
             is_adulterated=bool(pred["is_adulterated"]),
             risk_score=float(pred["risk_score"]),
@@ -170,6 +182,16 @@ def create_app(model: Cascade | None = None, model_info: dict[str, Any] | None =
             unusual_readings=pred["unusual_readings"],
             model_version=version(),
         )
+        if state["store"] is not None:
+            state["store"].save_prediction(
+                {
+                    **result.model_dump(),
+                    "status": "scored",
+                    "collection_point": sample.collection_point,
+                    "inputs": {f: getattr(sample, f) for f in FEATURES},
+                }
+            )
+        return result
 
     async def read_batch(request: Request) -> pd.DataFrame:
         ctype = request.headers.get("content-type", "").split(";")[0].strip().lower()
@@ -188,6 +210,7 @@ def create_app(model: Cascade | None = None, model_info: dict[str, Any] | None =
                 upload = (await request.form()).get("file")
                 if upload is None or isinstance(upload, str):
                     raise HTTPException(422, "multipart upload needs a CSV in field 'file'")
+                request.state.filename = upload.filename
                 df = pd.read_csv(io.BytesIO(await upload.read()), dtype=TEXT_COLUMNS)
             else:
                 raise HTTPException(415, "use application/json, text/csv or multipart/form-data")
@@ -253,7 +276,25 @@ def create_app(model: Cascade | None = None, model_info: dict[str, Any] | None =
     @app.post("/predict/batch", response_model=BatchResponse, openapi_extra=BATCH_BODY_DOC)
     async def predict_batch(request: Request) -> dict[str, Any]:
         df = await read_batch(request)
-        return await run_in_threadpool(score_batch, df)
+        response = await run_in_threadpool(score_batch, df)
+        if state["store"] is not None:
+            source = request.headers.get("content-type", "").split(";")[0].strip().lower()
+            filename = getattr(request.state, "filename", None)
+            await run_in_threadpool(state["store"].save_batch, response, source, filename)
+        return response
+
+    @app.get("/history/{kind}")
+    def history(kind: Literal["predictions", "batches"], limit: int = 20) -> list[dict[str, Any]]:
+        """Most recent stored results (needs MongoDB to be configured)."""
+        if state["store"] is None:
+            raise HTTPException(503, "MongoDB storage is not configured (set MONGODB_URI)")
+        return jsonable_encoder(state["store"].recent(kind, max(1, min(limit, 1000))))
+
+    @app.delete("/history/{kind}")
+    def clear_history(kind: Literal["predictions", "batches"]) -> dict[str, int]:
+        if state["store"] is None:
+            raise HTTPException(503, "MongoDB storage is not configured (set MONGODB_URI)")
+        return {"deleted": state["store"].clear(kind)}
 
     return app
 
